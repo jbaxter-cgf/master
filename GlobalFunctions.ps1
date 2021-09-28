@@ -1,7 +1,6 @@
 ############################################
 ## Define Functions
 ############################################
-
 Function Write-Log
 {
     [CmdletBinding()]
@@ -18,6 +17,96 @@ Function Write-Log
     #Output.
     $Output | Out-File -Encoding UTF8 -Force -FilePath $File -Append;
     Return Write-Output $Output;
+}
+
+##Author: Nicola Suter, Kudos to Tobias Renström for Get-ADGroupMembership, Test-ADGroupMemberShip and Test-RunningAsSystem
+function Get-ADGroupMembership {
+	param(
+		[parameter(Mandatory = $true)]
+		[string]$UserPrincipalName
+	)
+
+	process {
+
+		try {
+
+			if ([string]::IsNullOrEmpty($env:USERDNSDOMAIN) -and [string]::IsNullOrEmpty($searchRoot)) {
+				Write-Error "Security group filtering won't work because `$env:USERDNSDOMAIN is not available!"
+				Write-Warning "You can override your AD Domain in the `$overrideUserDnsDomain variable"
+				Write-Output "Security group filtering won't work because `$env:USERDNSDOMAIN is not available!"
+				exit 1
+			}
+			else {
+
+				# if no domain specified fallback to PowerShell environment variable
+				if ([string]::IsNullOrEmpty($searchRoot)) {
+					$searchRoot = $env:USERDNSDOMAIN
+				}
+
+				$searcher = New-Object -TypeName System.DirectoryServices.DirectorySearcher
+				$searcher.Filter = "(&(userprincipalname=$UserPrincipalName))"
+				$searcher.SearchRoot = "LDAP://$searchRoot"
+				$distinguishedName = $searcher.FindOne().Properties.distinguishedname
+				$searcher.Filter = "(member:1.2.840.113556.1.4.1941:=$distinguishedName)"
+
+				[void]$searcher.PropertiesToLoad.Add("name")
+
+				$list = [System.Collections.Generic.List[String]]@()
+
+				$results = $searcher.FindAll()
+
+				foreach ($result in $results) {
+					$resultItem = $result.Properties
+					[void]$List.add($resultItem.name)
+				}
+
+				$list
+			}
+		}
+		catch {
+			#Nothing we can do
+			Write-Warning $_.Exception.Message
+		}
+	}
+}
+
+#check if running as system
+function Test-RunningAsSystem {
+	[CmdletBinding()]
+	param()
+	process {
+		return [bool]($(whoami -user) -match "S-1-5-18")
+	}
+}
+
+#Testing if groupmembership is given for user
+function Test-GroupMembership {
+    [CmdletBinding()]
+    param (
+        $driveMappingConfig,
+        $groupMemberships
+    )
+    try {
+        $obj = foreach ($d in $driveMappingConfig) {
+            if (-not ([string]::IsNullOrEmpty($($d.GroupFilter)))) {
+                foreach ($filter in $($d.GroupFilter)) {
+                    if ($groupMemberships -contains $filter) {
+                        $d
+                    }
+                    else {
+                        #no match for group
+                    }
+                }
+            }
+            else {
+                $d 
+            }
+        }
+        $obj
+    }
+    catch {
+        Write-Error "Unknown error testing group memberships: $($_.Exception.Message)"
+    }
 }
 
 Function Test-Elevation {
