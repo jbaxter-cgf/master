@@ -1,7 +1,7 @@
 ############################################
 ## Functions
 ############################################
-function Write-Log
+Function Write-Log
 {
     [CmdletBinding()]
     param
@@ -25,7 +25,7 @@ function Write-Log
 }
 
 ##Author: Nicola Suter, Kudos to Tobias Renström for Get-ADGroupMembership, Test-ADGroupMemberShip and Test-RunningAsSystem
-function Get-ADGroupMembership {
+Function Get-ADGroupMembership {
     [CmdletBinding()]
 	param(
 		[Parameter(Mandatory = $true)]
@@ -73,7 +73,7 @@ function Get-ADGroupMembership {
 }
 
 #Import JSON file contents into array for processing.
-function Get-JSON {
+Function Get-JSON {
 	[CmdletBinding()]
     param
     (
@@ -108,14 +108,14 @@ Function Test-Elevation {
 }
 
 #check if running as system
-function Test-RunningAsSystem {
+Function Test-RunningAsSystem {
 	process {
 		return [bool]($(whoami -user) -match "S-1-5-18")
 	}
 }
 
 ## Testing if groupmembership is given for user
-function Test-GroupMembership {
+Function Test-GroupMembership {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)]
@@ -147,38 +147,6 @@ function Test-GroupMembership {
     catch {
         Write-Error "Unknown error testing group memberships: $($_.Exception.Message)"
     }
-}
-function Test-PendingReboot {
-
-}
-Function Test-Elevation {
-	Write-Host "Checking for elevation"
-
-	If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
-		[Security.Principal.WindowsBuiltInRole] "Administrator"))
-	{
-		Write-Warning "Sorry, you need to run this script from an elevated PowerShell prompt!`nPlease start the PowerShell prompt as an Administrator and re-run the script."
-		Write-Warning "Aborting script..."
-		Break
-	}
-	Write-Host "PowerShell runs elevated, OK, continuing...`n" -ForegroundColor Green
-}
-
-Function Test-InternetConnection
-{
-    [CmdletBinding()]
-    param
-    (
-        [Parameter(Mandatory=$true)]
-		[System.String]
-		$Target
-    )
-
-    #Test the connection to target.
-    $Result = Test-NetConnection -ComputerName ($Target -replace "https://","") -Port 443 -WarningAction SilentlyContinue;
-
-    #Return result.
-    Return $Result;
 }
 
 Function Test-ScheduleTask
@@ -234,7 +202,6 @@ Function Test-Module {
 		Write-Output "Module:`t $Name `tSTATUS=MISSING"
 		try {
 			# Install NuGet package provider
-			#$PackageProvider = Install-PackageProvider -Name NuGet -Scope $Scope -Force -Verbose:$false
 			$PackageProvider = Install-PackageProvider -Name NuGet -Scope $Scope -Force -Verbose:$false
 
 			# Check if PSGallery is a trusted source, and if not, add it
@@ -260,7 +227,6 @@ Function Test-Module {
 # Deprecated, replace with Invoke-LoginMgGraph
 Function Invoke-LoginMSOnline {
 	<#
-	## Establish connection to Microsoft Online Services 
     Try {
         Get-MsolDomain -ErrorAction Stop > $null
     }
@@ -277,7 +243,6 @@ Function Invoke-LoginMSOnline {
 
 # Deprecation on March 30, 2024, replace with Invoke-LoginMgGraph
 Function Invoke-Login {
-	## Establish connection to Microsoft Online Services 
     Try {
         Get-AzureADDomain -ErrorAction Stop > $null
     }
@@ -289,13 +254,12 @@ Function Invoke-Login {
         Write-Output "Connected to Azure Active Directory PowerShell for Graph"
     }
 	#>
-	Write-Output "This cmdlet is schedule for deprecation on March 30, 2024. Please use Invoke-LoginMgGraph instead."
+	Write-Output "This cmdlet is scheduled for deprecation on March 30, 2024. Please use Invoke-LoginMgGraph instead."
 }
 
 
 # Replace
 Function Invoke-LoginMgGraph {
-	## Establish connection to Microsoft Online Services 
     Try {
         Get-Organization -ErrorAction Stop > $null
     }
@@ -309,7 +273,7 @@ Function Invoke-LoginMgGraph {
 }
 
 Function Invoke-LoginMSGraph {
-	## Establish connection to Microsoft Online Services 
+
     Try {
         Get-Organization -ErrorAction Stop > $null
     }
