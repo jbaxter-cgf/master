@@ -214,7 +214,7 @@ Function Test-Module {
 	)
 	try {
 		Write-Output "Module:`t $Name `tSTATUS=SEARCHING"
-		if ($null -eq (Get-Module -ListAvailable -Name $Name -ErrorAction Stop -Verbose:$false)) {
+		if ($null -eq (Get-InstalledModule -Name $Name -ErrorAction Stop -Verbose:$false)) {
 			Write-Output "Module:`t $Name `tSTATUS=VERSIONCHECK"
 			$LatestModuleVersion = (Find-Module -Name $Name -ErrorAction Stop -Verbose:$false).Version
 			if ($LatestModuleVersion -gt $Name.Version) {
