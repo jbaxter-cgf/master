@@ -251,7 +251,7 @@ Function Test-Module {
 		}
 		catch [System.Exception] {
 			Write-Output "Module:`t $Name `tSTATUS=FAILED"
-			Write-Output "Error installing module $Name: $($_.Exception.Message)"
+			Write-Output "Error installing module $Name`: $($_.Exception.Message)"
 			Break
 		}
 	}
