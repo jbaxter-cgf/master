@@ -1,36 +1,40 @@
 ############################################
-## Define Functions
+## Functions
 ############################################
-Function Write-Log
+function Write-Log
 {
     [CmdletBinding()]
-    Param
+    param
     (
-        [parameter(Mandatory=$true)][string]$File,
-        [parameter(Mandatory=$true)][string]$Text,
-        [parameter(Mandatory=$true)][string][ValidateSet("Information", "Error", "Warning")]$Status
-    )
+        [Parameter(Mandatory=$true)]
+        [System.String]
+        $File,
 
-    #Construct output.
+        [parameter(Mandatory=$true)]
+        [System.String]
+        $Text,
+
+        [parameter(Mandatory=$true)]
+        [ValidateSet("Information", "Error", "Warning")]
+        [System.String]
+        $Status
+    )
     $Output = ("[" + (((Get-Date).ToShortDateString()) + "][" + (Get-Date).ToLongTimeString()) + "][" + $Status + "] " + $Text);
-    
-    #Output.
     $Output | Out-File -Encoding UTF8 -Force -FilePath $File -Append;
     Return Write-Output $Output;
 }
 
 ##Author: Nicola Suter, Kudos to Tobias Renström for Get-ADGroupMembership, Test-ADGroupMemberShip and Test-RunningAsSystem
 function Get-ADGroupMembership {
+    [CmdletBinding()]
 	param(
-		[parameter(Mandatory = $true)]
-		[string]$UserPrincipalName
+		[Parameter(Mandatory = $true)]
+		[System.String]
+		$UserPrincipalName
 	)
-
 	process {
-
 		try {
-
-			if ([string]::IsNullOrEmpty($env:USERDNSDOMAIN) -and [string]::IsNullOrEmpty($searchRoot)) {
+			if ([System.String]::IsNullOrEmpty($env:USERDNSDOMAIN) -and [System.String]::IsNullOrEmpty($searchRoot)) {
 				Write-Error "Security group filtering won't work because `$env:USERDNSDOMAIN is not available!"
 				Write-Warning "You can override your AD Domain in the `$overrideUserDnsDomain variable"
 				Write-Output "Security group filtering won't work because `$env:USERDNSDOMAIN is not available!"
@@ -39,7 +43,7 @@ function Get-ADGroupMembership {
 			else {
 
 				# if no domain specified fallback to PowerShell environment variable
-				if ([string]::IsNullOrEmpty($searchRoot)) {
+				if ([System.String]::IsNullOrEmpty($searchRoot)) {
 					$searchRoot = $env:USERDNSDOMAIN
 				}
 
@@ -52,14 +56,12 @@ function Get-ADGroupMembership {
 				[void]$searcher.PropertiesToLoad.Add("name")
 
 				$list = [System.Collections.Generic.List[String]]@()
-
 				$results = $searcher.FindAll()
 
 				foreach ($result in $results) {
 					$resultItem = $result.Properties
 					[void]$List.add($resultItem.name)
 				}
-
 				$list
 			}
 		}
@@ -70,21 +72,59 @@ function Get-ADGroupMembership {
 	}
 }
 
+#Import JSON file contents into array for processing.
+function Get-JSON {
+	[CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory=$true)]
+		[System.String]
+		$File
+    )
+	$ImportJson = Get-Content $File | Out-String -ErrorAction SilentlyContinue
+	$processJSON = $ImportJson | ConvertFrom-Json -ErrorAction Stop
+	$processJSON = foreach ($u in $processJSON) {
+		[PSCustomObject]@{
+			id          = $($u.id)
+			email       = $($u.email)
+			firstName   = $($u.firstName)
+			lastName    = $($u.lastName)
+			userType    = $($u.userType)
+		}
+	}
+}
+
+Function Test-Elevation {
+	Write-Host "Checking for elevation"
+
+	If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
+		[Security.Principal.WindowsBuiltInRole] "Administrator"))
+	{
+		Write-Warning "Sorry, you need to run this script from an elevated PowerShell prompt!`nPlease start the PowerShell prompt as an Administrator and re-run the script."
+		Write-Warning "Aborting script..."
+		Break
+	}
+	Write-Host "PowerShell runs elevated, OK, continuing...`n" -ForegroundColor Green
+}
+
 #check if running as system
 function Test-RunningAsSystem {
-	[CmdletBinding()]
-	param()
 	process {
 		return [bool]($(whoami -user) -match "S-1-5-18")
 	}
 }
 
-#Testing if groupmembership is given for user
+## Testing if groupmembership is given for user
 function Test-GroupMembership {
     [CmdletBinding()]
     param (
-        $driveMappingConfig,
-        $groupMemberships
+        [Parameter(Mandatory=$true)]
+		[System.String]
+		$driveMappingConfig,
+
+		[Parameter(Mandatory=$true)]
+		[System.String]
+		$groupMemberships
     )
     try {
         $obj = foreach ($d in $driveMappingConfig) {
@@ -108,7 +148,9 @@ function Test-GroupMembership {
         Write-Error "Unknown error testing group memberships: $($_.Exception.Message)"
     }
 }
+function Test-PendingReboot {
 
+}
 Function Test-Elevation {
 	Write-Host "Checking for elevation"
 
@@ -125,9 +167,11 @@ Function Test-Elevation {
 Function Test-InternetConnection
 {
     [CmdletBinding()]
-    Param
+    param
     (
-        [parameter(Mandatory=$true)][string]$Target
+        [Parameter(Mandatory=$true)]
+		[System.String]
+		$Target
     )
 
     #Test the connection to target.
@@ -140,80 +184,93 @@ Function Test-InternetConnection
 Function Test-ScheduleTask
 {
     [CmdletBinding()]
-    
-    Param
+    param
     (
-        [parameter(Mandatory=$true)][string]$Name
+        [Parameter(Mandatory=$true)]
+		[System.String]
+		$Name
     )
-
     #Create a new schedule object.
     $Schedule = New-Object -com Schedule.Service;
-    
     #Connect to the store.
     $Schedule.Connect();
-
     #Get schedule tak folders.
     $Task = $Schedule.GetFolder("\").GetTasks(0) | Where-Object {$_.Name -eq $Name -and $_.Enabled -eq $true};
-
     #If the task exists and is enabled.
     If($Task)
     {
-        #Return true.
         Return $true;
     }
-    #If the task doesn't exist.
     Else
     {
-        #Return false.
         Return $false;
     }
 }
 
 Function Test-Module {
-	Param([string]$Name)
+	Param(
+		[String]$Name,
+		[String]$Scope
+	)
 	try {
-		#Write-Host "INFO: Attempting to locate $Module module"
 		Write-Output "Module:`t $Name `tSTATUS=SEARCHING"
-		Write-Output "Module:`t $Name `tSTATUS=FOUND"
-		$ModuleName = Get-InstalledModule -Name $Name -ErrorAction Stop -Verbose:$false
-		if ($ModuleName -ne $null) {
-			#Write-Host "INFO: Authentication module detected, checking for latest version"
+		if ($null -eq (Get-Module -ListAvailable -Name $Name -ErrorAction Stop -Verbose:$false)) {
 			Write-Output "Module:`t $Name `tSTATUS=VERSIONCHECK"
 			$LatestModuleVersion = (Find-Module -Name $Name -ErrorAction Stop -Verbose:$false).Version
-			if ($LatestModuleVersion -gt $ModuleName.Version) {
-				#Write-Host "INFO: Latest version of $Module module is not installed, attempting to install: $($LatestModuleVersion.ToString())"
+			if ($LatestModuleVersion -gt $Name.Version) {
 				Write-Output "Module:`t $Name `tSTATUS=UPDATING `tVERSION=$($LatestModuleVersion.ToString())"
-				$UpdateModuleInvocation = Update-Module -Name $Name -Scope CurrentUser -Force -ErrorAction Stop -Confirm:$false -Verbose:$false
+				#$UpdateModuleInvocation = Update-Module -Name $Name -Scope $Scope -Force -ErrorAction Stop -Confirm:$false -Verbose:$false
+				Update-Module -Name $Name -Scope $Scope -Force -ErrorAction Stop -Confirm:$false -Verbose:$false
 			}
-			if ($LatestModuleVersion -eq $ModuleName.Version) {
-				#Write-Host "INFO: Latest version of $Module module is installed.
+			if ($LatestModuleVersion -eq $Name.Version) {
 				Write-Output "Module:`t $Name `tSTATUS=PASSED"
 			}
 		}
 	}
 	catch [System.Exception] {
-		#Write-Host "WARN: Unable to detect $Name module, attempting to install from PSGallery"
 		Write-Output "Module:`t $Name `tSTATUS=MISSING"
 		try {
-            Test-Elevation
 			# Install NuGet package provider
-			$PackageProvider = Install-PackageProvider -Name NuGet -Force -Verbose:$false
+			#$PackageProvider = Install-PackageProvider -Name NuGet -Scope $Scope -Force -Verbose:$false
+			Install-PackageProvider -Name NuGet -Scope $Scope -Force -Verbose:$false
 
-            # Set PSRepository as Trusted
-			Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+			# Check if PSGallery is a trusted source, and if not, add it
+			$PSGallery = Get-PSRepository -Name PSGallery -ErrorAction Stop -Verbose:$false
+			if ($PSGallery.InstallationPolicy -ne "Trusted") {
+				Write-Output "Adding PSGallery as trusted source"
+				Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+			}
 			
-			# Install AzureAD module
-			Install-Module -Name $Name -Scope AllUsers -Force -ErrorAction Stop -Confirm:$false -Verbose:$false
-			#Write-Host "INFO: Successfully installed $Name"
+			# Install module
+			Install-Module -Name $Name -Scope $Scope -Force -ErrorAction Stop -Confirm:$false -Verbose:$false
 			Write-Output "Module:`t $Name `tSTATUS=INSTALLING"
 		}
 		catch [System.Exception] {
-			#Write-Host "ERROR: An error occurred while attempting to install $Name module. Error message: $($_.Exception.Message)" ; Break
-			Write-Output "Module:`t $Name `tSTATUS=FAILED" ; Break
+			Write-Output "Module:`t $Name `tSTATUS=FAILED"
+			Break
 		}
 	}
 }
 
+# Deprecated, replace with Invoke-LoginMgGraph
+Function Invoke-LoginMSOnline {
+	<#
+	## Establish connection to Microsoft Online Services 
+    Try {
+        Get-MsolDomain -ErrorAction Stop > $null
+    }
+    Catch {
+        Write-Output "Connecting to Office 365..."
+        Connect-MsolService
+    }
+    Finally {
+        Write-Output "Connected to MsolService"
+    }
+	#>
+	Write-Output "This cmdlet is deprecated, please use Invoke-LoginMgGraph instead."
+}
+
+# Deprecation on March 30, 2024, replace with Invoke-LoginMgGraph
 Function Invoke-Login {
 	## Establish connection to Microsoft Online Services 
     Try {
@@ -226,18 +283,42 @@ Function Invoke-Login {
     Finally {
         Write-Output "Connected to Azure AD"
     }
+	#>
+	Write-Output "This cmdlet is schedule for deprecation on March 30, 2024. Please use Invoke-LoginMgGraph instead."
 }
 
-Function Invoke-LoginMSOnline {
+
+# Replace
+Function Invoke-LoginMgGraph {
 	## Establish connection to Microsoft Online Services 
     Try {
-        Get-MsolDomain -ErrorAction Stop > $null
+        Get-Organization -ErrorAction Stop > $null
     }
     Catch {
-        Write-Output "Connecting to Office 365..."
-        Connect-MsolService
+        Write-Output "Connecting to Microsoft Graph..."
+        Connect-MSGraph -ForceInteractive
+        Update-MSGraphEnvironment -SchemaVersion beta
+        Connect-MSGraph
     }
     Finally {
-        Write-Output "Connected to MsolService"
+        Write-Output "Connected to Microsoft Graph"
+		Select-MgProfile Beta
+    }	
+}
+
+Function Invoke-LoginMSGraph {
+	## Establish connection to Microsoft Online Services 
+    Try {
+        Get-Organization -ErrorAction Stop > $null
     }
+    Catch {
+        Write-Output "Connecting to Microsoft Graph..."
+        Connect-MSGraph -ForceInteractive
+        Update-MSGraphEnvironment -SchemaVersion beta
+        Connect-MSGraph
+    }
+    Finally {
+        Write-Output "Connected to Microsoft Graph"
+		Select-MgProfile Beta
+    }	
 }
