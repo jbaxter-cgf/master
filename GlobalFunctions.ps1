@@ -282,11 +282,11 @@ Function Invoke-Login {
         Get-AzureADDomain -ErrorAction Stop > $null
     }
     Catch {
-        Write-Output "Connecting to Azure AD..."
+        Write-Output "Connecting ..."
 		Connect-AzureAD
 	}
     Finally {
-        Write-Output "Connected to Azure AD"
+        Write-Output "Connected to Azure Active Directory PowerShell for Graph"
     }
 	#>
 	Write-Output "This cmdlet is schedule for deprecation on March 30, 2024. Please use Invoke-LoginMgGraph instead."
@@ -300,12 +300,11 @@ Function Invoke-LoginMgGraph {
         Get-Organization -ErrorAction Stop > $null
     }
     Catch {
-        Write-Output "Connecting to Microsoft Graph..."
-        Connect-MgGraph -ForceInteractive
-        Set-MgGraphEnvironment -GraphEndpoint "https://graph.microsoft.com/beta/"
+        Write-Output "Connecting ..."
+        Connect-MgGraph -Scopes "User.Read.All", "Group.Read.All"
     }
     Finally {
-        Write-Output "Connected to Microsoft Graph"
+        Write-Output "Connected to Microsoft Graph PowerShell"
     }	
 }
 
@@ -315,13 +314,11 @@ Function Invoke-LoginMSGraph {
         Get-Organization -ErrorAction Stop > $null
     }
     Catch {
-        Write-Output "Connecting to Microsoft Graph..."
+        Write-Output "Connecting ..."
         Connect-MSGraph -ForceInteractive
         Update-MSGraphEnvironment -SchemaVersion beta
-        Connect-MSGraph
     }
     Finally {
         Write-Output "Connected to Microsoft Graph"
-		Select-MgProfile Beta
     }	
 }
