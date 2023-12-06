@@ -212,6 +212,7 @@ Function Test-Module {
 		[String]$Name,
 		[String]$Scope
 	)
+
 	try {
 		Write-Output "Module:`t $Name `tSTATUS=SEARCHING"
 		if ($null -eq (Get-InstalledModule -Name $Name -ErrorAction Stop -Verbose:$false)) {
@@ -225,6 +226,8 @@ Function Test-Module {
 			if ($LatestModuleVersion -eq $Name.Version) {
 				Write-Output "Module:`t $Name `tSTATUS=PASSED"
 			}
+		} else {
+			Write-Output "Module:`t $Name `tSTATUS=INSTALLED"
 		}
 	}
 	catch [System.Exception] {
@@ -232,7 +235,7 @@ Function Test-Module {
 		try {
 			# Install NuGet package provider
 			#$PackageProvider = Install-PackageProvider -Name NuGet -Scope $Scope -Force -Verbose:$false
-			Install-PackageProvider -Name NuGet -Scope $Scope -Force -Verbose:$false
+			$PackageProvider = Install-PackageProvider -Name NuGet -Scope $Scope -Force -Verbose:$false
 
 			# Check if PSGallery is a trusted source, and if not, add it
 			$PSGallery = Get-PSRepository -Name PSGallery -ErrorAction Stop -Verbose:$false
@@ -243,7 +246,8 @@ Function Test-Module {
 			
 			# Install module
 			Install-Module -Name $Name -Scope $Scope -Force -ErrorAction Stop -Confirm:$false -Verbose:$false
-			Write-Output "Module:`t $Name `tSTATUS=INSTALLING"
+			Write-Output "Module:`t $Name `tSTATUS=INSTALLING"			
+			Write-Output "Module:`t $Name `tSTATUS=INSTALLED"
 		}
 		catch [System.Exception] {
 			Write-Output "Module:`t $Name `tSTATUS=FAILED"
