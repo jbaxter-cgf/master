@@ -302,12 +302,10 @@ Function Invoke-LoginMgGraph {
     Catch {
         Write-Output "Connecting to Microsoft Graph..."
         Connect-MgGraph -ForceInteractive
-        Update-MSGraphEnvironment -SchemaVersion beta
-        Connect-MSGraph
+        Set-MgGraphEnvironment -GraphEndpoint "https://graph.microsoft.com/beta/"
     }
     Finally {
         Write-Output "Connected to Microsoft Graph"
-		Select-MgProfile Beta
     }	
 }
 
