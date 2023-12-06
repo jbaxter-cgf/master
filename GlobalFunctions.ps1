@@ -251,6 +251,7 @@ Function Test-Module {
 		}
 		catch [System.Exception] {
 			Write-Output "Module:`t $Name `tSTATUS=FAILED"
+			Write-Output "Error installing module $Name: $($_.Exception.Message)"
 			Break
 		}
 	}
@@ -300,7 +301,7 @@ Function Invoke-LoginMgGraph {
     }
     Catch {
         Write-Output "Connecting to Microsoft Graph..."
-        Connect-MSGraph -ForceInteractive
+        Connect-MgGraph -ForceInteractive
         Update-MSGraphEnvironment -SchemaVersion beta
         Connect-MSGraph
     }
