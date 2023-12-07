@@ -1,6 +1,19 @@
 ############################################
 ## Functions
 ############################################
+Function Get-Now
+{
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory=$true)]
+		[System.String]
+		$Format
+	)
+	$Now = Get-Date -Format $Format;
+	Return $Now;
+}
+
 Function Write-Log
 {
     [CmdletBinding()]
@@ -260,12 +273,15 @@ Function Invoke-Login {
 
 # Replace
 Function Invoke-LoginMgGraph {
+	Param(
+		[String]$Scopes
+	)
     Try {
         Get-Organization -ErrorAction Stop > $null
     }
     Catch {
         Write-Output "Connecting ..."
-        Connect-MgGraph -Scopes "User.Read.All", "Group.Read.All"
+        Connect-MgGraph -Scopes $Scopes
     }
     Finally {
         Write-Output "Connected to Microsoft Graph PowerShell"
@@ -273,7 +289,6 @@ Function Invoke-LoginMgGraph {
 }
 
 Function Invoke-LoginMSGraph {
-
     Try {
         Get-Organization -ErrorAction Stop > $null
     }
