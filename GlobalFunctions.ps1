@@ -95,7 +95,7 @@ Function Get-JSON {
 }
 
 Function Test-Elevation {
-	Write-Host "Checking for elevation"
+	Write-Output "Checking for elevation"
 
 	If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
 		[Security.Principal.WindowsBuiltInRole] "Administrator"))
