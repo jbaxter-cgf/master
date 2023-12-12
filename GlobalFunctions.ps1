@@ -227,12 +227,14 @@ Function Test-Module {
 			# Install module
 			Install-Module -Name $Name -Scope $Scope -Force -ErrorAction Stop -Confirm:$false -Verbose:$false
 			Write-Output "Module:`t $Name `tSTATUS=INSTALLING"			
-			Write-Output "Module:`t $Name `tSTATUS=INSTALLED"
 		}
 		catch [System.Exception] {
 			Write-Output "Module:`t $Name `tSTATUS=FAILED"
 			Write-Output "Error installing module: $Name, code $($_.Exception.Message)"
 			Break
+		}
+		finally {
+			Write-Output "Module:`t $Name `tSTATUS=INSTALLED"
 		}
 	}
 }
@@ -270,25 +272,9 @@ Function Invoke-Login {
 	Write-Output "This cmdlet is scheduled for deprecation on March 30, 2024. Please use Invoke-LoginMgGraph instead."
 }
 
-
-# Replace
-Function Invoke-LoginMgGraph {
-	Param(
-		[String]$Scopes
-	)
-    Try {
-        Get-Organization -ErrorAction Stop > $null
-    }
-    Catch {
-        Write-Output "Connecting ..."
-        Connect-MgGraph -Scopes $Scopes
-    }
-    Finally {
-        Write-Output "Connected to Microsoft Graph PowerShell"
-    }	
-}
-
+# Replace with Invoke-LoginMgGraph
 Function Invoke-LoginMSGraph {
+	Write-Output "This cmdlet should be replaced, use Invoke-LoginMgGraph instead."
     Try {
         Get-Organization -ErrorAction Stop > $null
     }
@@ -298,6 +284,23 @@ Function Invoke-LoginMSGraph {
         Update-MSGraphEnvironment -SchemaVersion beta
     }
     Finally {
-        Write-Output "Connected to Microsoft Graph"
+        Write-Output "Connected to Microsoft Graph PowerShell"
+    }	
+}
+
+# Current authentication method.
+Function Invoke-LoginMgGraph {
+	Param(
+		[String]$Scopes
+	)
+    Try {
+        Get-Organization -ErrorAction Stop > $null
+    }
+    Catch {
+        Write-Output "Connecting ..."
+        Connect-MgGraph -Scopes $Scopes -NoWelcome
+    }
+    Finally {
+        Write-Output "Connected to Microsoft Graph PowerShell"
     }	
 }
